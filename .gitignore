@@ -1,0 +1,49 @@
+# Build directories
+Debug_m7_0/
+Debug_m7_1/
+
+# IDE specific files
+.vscode/
+.vs/
+*.uvopt
+*.uvoptx
+*.uvgui
+*.uvguix
+*.bak
+*.ddk
+*.edk
+*.lst
+*.lnp
+*.mpf
+*.mpj
+*.omf
+*.plg
+*.tra
+*.dep
+*.d
+*.crf
+*.htm
+*.sct
+*.iex
+*.axf
+*.sct_
+*.scvd
+
+
+# IAR files
+settings/
+*.pbd
+*.pbi
+*.pdb2
+
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
