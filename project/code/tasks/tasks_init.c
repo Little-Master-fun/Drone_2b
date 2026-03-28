@@ -2,11 +2,9 @@
 
 #include "config/flight_params.h"
 #include "config/shared_memory.h"
-#include "zf_driver_flash.h"
 
 void tasks_init_all (void)
 {
-    flash_init();
     shm_sensors_init();
     flight_params_init();
 

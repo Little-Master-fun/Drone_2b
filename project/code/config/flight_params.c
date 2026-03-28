@@ -4,7 +4,7 @@
 
 #include "flight_params.h"
 
-#define FLIGHT_PARAM_FLASH_PAGE          (FLASH_PAGE_NUM - 1U)
+#define FLIGHT_PARAM_FLASH_PAGE          (0U)
 #define FLIGHT_PARAM_MAGIC               (0x46504152UL)
 #define FLIGHT_PARAM_VERSION             (1U)
 #define FLIGHT_PARAM_STORE_WORDS         (4U + FLIGHT_PARAM_COUNT)
@@ -290,6 +290,11 @@ uint8 flight_params_load (void)
     uint32 calc_crc = 0U;
     uint16 i = 0U;
 
+    if (!g_inited)
+    {
+        flash_init();
+    }
+
     flash_read_page_to_buffer(0U, FLIGHT_PARAM_FLASH_PAGE, FLIGHT_PARAM_STORE_WORDS);
 
     if (flash_union_buffer[0].uint32_type != FLIGHT_PARAM_MAGIC)
@@ -329,6 +334,11 @@ uint8 flight_params_save (void)
     uint32 crc = 0U;
     uint16 i = 0U;
 
+    if (!g_inited)
+    {
+        flight_params_init();
+    }
+
     flash_buffer_clear();
     flash_union_buffer[0].uint32_type = FLIGHT_PARAM_MAGIC;
     flash_union_buffer[1].uint32_type = FLIGHT_PARAM_VERSION;
@@ -351,6 +361,7 @@ void flight_params_init (void)
         return;
     }
 
+    flash_init();
     fp_reset_defaults_locked();
     if (flight_params_load() != 0U)
     {
