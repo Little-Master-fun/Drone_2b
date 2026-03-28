@@ -4,7 +4,7 @@
 
 #include "flight_params.h"
 
-#define FLIGHT_PARAM_FLASH_PAGE          (95U)
+#define FLIGHT_PARAM_FLASH_PAGE          (FLASH_PAGE_NUM - 1U)
 #define FLIGHT_PARAM_MAGIC               (0x46504152UL)
 #define FLIGHT_PARAM_VERSION             (1U)
 #define FLIGHT_PARAM_STORE_WORDS         (4U + FLIGHT_PARAM_COUNT)
