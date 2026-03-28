@@ -28,6 +28,10 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
+#define vPortSVCHandler     SVC_Handler
+#define xPortPendSVHandler  PendSV_Handler
+#define xPortSysTickHandler SysTick_Handler
+
 
 /*-----------------------------------------------------------
  * Application specific definitions.
@@ -152,4 +156,3 @@ Example configuration for Traveo II with __NVIC_PRIO_BITS = 3 for CM4/CM7:
 /* A header file that defines trace macro can be included here. */
 
 #endif /* FREERTOS_CONFIG_H */
-

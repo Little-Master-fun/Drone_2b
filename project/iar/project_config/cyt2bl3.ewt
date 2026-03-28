@@ -2884,6 +2884,21 @@
             </file>
         </group>
         <group>
+            <name>tasks</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_blink.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_blink.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_init.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks.h</name>
+            </file>
+        </group>
+        <group>
             <name>estimator</name>
             <file>
                 <name>$PROJ_DIR$\..\..\code\estimator\attitude_estimator_6axis.c</name>
@@ -2901,6 +2916,117 @@
         <file>
             <name>$PROJ_DIR$\..\..\..\libraries\doc\version.txt</name>
         </file>
+    </group>
+    <group>
+        <name>free_rtos</name>
+        <group>
+            <name>include</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\atomic.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\croutine.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\deprecated_definitions.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\event_groups.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\FreeRTOS.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\FreeRTOSConfig.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\list.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\message_buffer.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\mpu_prototypes.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\mpu_wrappers.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\portable.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\projdefs.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\queue.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\semphr.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\stack_macros.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\StackMacros.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\stream_buffer.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\task.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\include\timers.h</name>
+            </file>
+        </group>
+        <group>
+            <name>portable</name>
+            <group>
+                <name>iar</name>
+                <group>
+                    <name>arm_cm4f</name>
+                    <file>
+                        <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\portable\IAR\ARM_CM4F\port.c</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\portable\IAR\ARM_CM4F\portasm.s</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\portable\IAR\ARM_CM4F\portmacro.h</name>
+                    </file>
+                </group>
+            </group>
+            <group>
+                <name>memmang</name>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\portable\MemMang\heap_4.c</name>
+                </file>
+            </group>
+        </group>
+        <group>
+            <name>source</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\croutine.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\event_groups.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\list.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\queue.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\stream_buffer.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\tasks.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\libraries\sdk\common\src\rtos\timers.c</name>
+            </file>
+        </group>
     </group>
     <group>
         <name>sdk</name>
