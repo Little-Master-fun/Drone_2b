@@ -2226,6 +2226,12 @@
         <group>
             <name>drivers</name>
             <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_dshot600.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_dshot600.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\code\drivers\driver_pmw3901.c</name>
             </file>
             <file>
@@ -2259,10 +2265,46 @@
                 <name>$PROJ_DIR$\..\..\code\tasks\tasks_blink.h</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_comm.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_commander.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_control.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_estimator.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\code\tasks\tasks_init.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_mixer.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\tasks\tasks_sensor.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\code\tasks\tasks.h</name>
+            </file>
+        </group>
+        <group>
+            <name>config</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\config\comm_protocol.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\config\flight_params.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\config\flight_params.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\config\shared_memory.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\config\shared_memory.h</name>
             </file>
         </group>
         <group>

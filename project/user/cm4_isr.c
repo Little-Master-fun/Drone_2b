@@ -174,9 +174,7 @@ void uart2_isr (void)
 {
     if(uart_isr_mask(UART_2))            // 串口2接收中断
     {
-        
-      
-        
+        wireless_module_uart_handler();
         
     }
     else                                // 串口2发送中断

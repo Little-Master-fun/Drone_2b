@@ -1,0 +1,102 @@
+#ifndef _FLIGHT_PARAMS_H_
+#define _FLIGHT_PARAMS_H_
+
+#include "zf_common_typedef.h"
+
+typedef enum
+{
+    FLIGHT_PARAM_ARMING_ENABLE = 0,
+    FLIGHT_PARAM_ALT_TARGET_M = 1,
+    FLIGHT_PARAM_THR_BASE = 2,
+    FLIGHT_PARAM_THR_ALT_KP = 3,
+    FLIGHT_PARAM_ROLL_KP = 4,
+    FLIGHT_PARAM_PITCH_KP = 5,
+    FLIGHT_PARAM_YAW_KP = 6,
+    FLIGHT_PARAM_OUT_LIMIT_ROLL = 7,
+    FLIGHT_PARAM_OUT_LIMIT_PITCH = 8,
+    FLIGHT_PARAM_OUT_LIMIT_YAW = 9,
+    FLIGHT_PARAM_OUT_LIMIT_THR_MIN = 10,
+    FLIGHT_PARAM_OUT_LIMIT_THR_MAX = 11,
+    FLIGHT_PARAM_FLOW_ENABLE = 12,
+    FLIGHT_PARAM_TOF_ENABLE = 13,
+    FLIGHT_PARAM_RATE_ROLL_P = 14,
+    FLIGHT_PARAM_RATE_ROLL_I = 15,
+    FLIGHT_PARAM_RATE_ROLL_D = 16,
+    FLIGHT_PARAM_RATE_PITCH_P = 17,
+    FLIGHT_PARAM_RATE_PITCH_I = 18,
+    FLIGHT_PARAM_RATE_PITCH_D = 19,
+    FLIGHT_PARAM_RATE_YAW_P = 20,
+    FLIGHT_PARAM_RATE_YAW_I = 21,
+    FLIGHT_PARAM_RATE_YAW_D = 22,
+    FLIGHT_PARAM_RATE_INT_LIM_RP = 23,
+    FLIGHT_PARAM_RATE_INT_LIM_YAW = 24,
+    FLIGHT_PARAM_RATE_MAX_ROLL_DPS = 25,
+    FLIGHT_PARAM_RATE_MAX_PITCH_DPS = 26,
+    FLIGHT_PARAM_RATE_MAX_YAW_DPS = 27,
+    FLIGHT_PARAM_MOTOR_DIR_M1 = 28,
+    FLIGHT_PARAM_MOTOR_DIR_M2 = 29,
+    FLIGHT_PARAM_MOTOR_DIR_M3 = 30,
+    FLIGHT_PARAM_MOTOR_DIR_M4 = 31,
+    FLIGHT_PARAM_MOTOR_TEST_ENABLE = 32,
+    FLIGHT_PARAM_MOTOR_TEST_INDEX = 33,
+    FLIGHT_PARAM_MOTOR_TEST_THR = 34,
+    FLIGHT_PARAM_FLIGHT_MODE = 35,
+    FLIGHT_PARAM_FLOW_RAD_PER_COUNT = 36,
+    FLIGHT_PARAM_POS_XY_P = 37,
+    FLIGHT_PARAM_VEL_XY_P = 38,
+    FLIGHT_PARAM_POS_VEL_MAX_MPS = 39,
+    FLIGHT_PARAM_POS_TILT_MAX_DEG = 40,
+    FLIGHT_PARAM_HOST_CTRL_ENABLE = 41,
+    FLIGHT_PARAM_HOST_ARM_ALLOW = 42,
+    FLIGHT_PARAM_HOST_TIMEOUT_S = 43,
+    FLIGHT_PARAM_HOST_XY_MAX_MPS = 44,
+    FLIGHT_PARAM_HOST_Z_MAX_MPS = 45,
+    FLIGHT_PARAM_HOST_YAW_MAX_DPS = 46,
+    FLIGHT_PARAM_HOST_THR_SPAN = 47,
+    FLIGHT_PARAM_HOST_ESTOP_ALLOW = 48,
+    FLIGHT_PARAM_LAND_HOLD_S = 49,
+    FLIGHT_PARAM_LAND_DESCEND_MPS = 50,
+    FLIGHT_PARAM_LAND_DISARM_ALT_M = 51,
+    FLIGHT_PARAM_THR_ALT_I = 52,
+    FLIGHT_PARAM_THR_ALT_I_LIM = 53,
+    FLIGHT_PARAM_ALT_Z_P = 54,
+    FLIGHT_PARAM_VEL_Z_D = 55,
+    FLIGHT_PARAM_VEL_Z_MAX_UP = 56,
+    FLIGHT_PARAM_VEL_Z_MAX_DN = 57,
+    FLIGHT_PARAM_MOTOR_MAP_OUT1 = 58,
+    FLIGHT_PARAM_MOTOR_MAP_OUT2 = 59,
+    FLIGHT_PARAM_MOTOR_MAP_OUT3 = 60,
+    FLIGHT_PARAM_MOTOR_MAP_OUT4 = 61,
+    FLIGHT_PARAM_HTE_ENABLE = 62,
+    FLIGHT_PARAM_HTE_HT_NOISE = 63,
+    FLIGHT_PARAM_HTE_HT_ERR_INIT = 64,
+    FLIGHT_PARAM_HTE_ACC_GATE = 65,
+    FLIGHT_PARAM_HTE_THR_RANGE = 66,
+    FLIGHT_PARAM_HTE_VXY_THR = 67,
+    FLIGHT_PARAM_HTE_VZ_THR = 68,
+    FLIGHT_PARAM_COUNT
+} flight_param_id_enum;
+
+typedef enum
+{
+    FLIGHT_PARAM_TYPE_U8 = 1,
+    FLIGHT_PARAM_TYPE_F32 = 2
+} flight_param_type_enum;
+
+void flight_params_init(void);
+uint8 flight_params_load(void);
+uint8 flight_params_save(void);
+void flight_params_reset_defaults(void);
+
+uint8 flight_param_get_type(uint8 param_id);
+uint8 flight_param_get_u8(uint8 param_id, uint8 *value);
+uint8 flight_param_get_f32(uint8 param_id, float *value);
+uint8 flight_param_set_u8(uint8 param_id, uint8 value);
+uint8 flight_param_set_f32(uint8 param_id, float value);
+
+uint8 flight_param_get_u8_default(uint8 param_id, uint8 default_value);
+float flight_param_get_f32_default(uint8 param_id, float default_value);
+
+uint16 flight_param_count(void);
+
+#endif
