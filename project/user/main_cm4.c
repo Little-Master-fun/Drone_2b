@@ -34,7 +34,7 @@
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
-#include "drivers/driver_pmw3901.h"
+#include "drivers/driver_vl53l0x.h"
 
 // 打开新的工程或者工程移动了位置务必执行以下操作
 // 第一步 关闭上面所有打开的文件
@@ -46,23 +46,67 @@
 
 // **************************** 代码区域 ****************************
 
-driver_pmw3901_data_struct g_pmw3901_flow_data;
-
-static void pmw3901_demo_init (void)
+typedef struct
 {
-    driver_pmw3901_clear_data(&g_pmw3901_flow_data);
+    driver_vl53l0x_status_struct status;
+    driver_vl53l0x_data_struct distance;
+    uint32 update_count;
+    uint8 init_done;
+    uint8 read_ok;
+    int8 text[96];
+} app_vl53l0x_demo_data_struct;
 
-    if (0 == driver_pmw3901_init())
+app_vl53l0x_demo_data_struct g_vl53l0x_distance_data;
+
+static void vl53l0x_demo_init (void)
+{
+    memset(&g_vl53l0x_distance_data, 0, sizeof(g_vl53l0x_distance_data));
+
+    if (0 == driver_vl53l0x_init())
     {
-        driver_pmw3901_set_led(1);
+        g_vl53l0x_distance_data.init_done = 1U;
+        g_vl53l0x_distance_data.read_ok = 1U;
+        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x init ok");
+    }
+    else
+    {
+        g_vl53l0x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x init failed");
     }
 
-    (void)driver_pmw3901_update_data(&g_pmw3901_flow_data);
+    g_vl53l0x_distance_data.status = driver_vl53l0x_get_status();
+    g_vl53l0x_distance_data.init_done = g_vl53l0x_distance_data.status.initialized;
 }
 
-static void pmw3901_demo_update (void)
+static void vl53l0x_demo_update (void)
 {
-    (void)driver_pmw3901_update_data(&g_pmw3901_flow_data);
+    uint8 ret = 0U;
+
+    g_vl53l0x_distance_data.status = driver_vl53l0x_get_status();
+    g_vl53l0x_distance_data.init_done = g_vl53l0x_distance_data.status.initialized;
+
+    if (!g_vl53l0x_distance_data.init_done)
+    {
+        g_vl53l0x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x not ready");
+        return;
+    }
+
+    ret = driver_vl53l0x_read(&g_vl53l0x_distance_data.distance);
+    if (0U != ret)
+    {
+        g_vl53l0x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x read error:%d", ret);
+        return;
+    }
+
+    g_vl53l0x_distance_data.update_count += 1U;
+    g_vl53l0x_distance_data.read_ok = 1U;
+    zf_sprintf(g_vl53l0x_distance_data.text,
+               "dist:%dmm status:%d ready:%d",
+               (int32)g_vl53l0x_distance_data.distance.distance_mm,
+               (int32)g_vl53l0x_distance_data.distance.range_status,
+               (int32)g_vl53l0x_distance_data.distance.data_ready);
 }
 
 int main(void)
@@ -70,11 +114,11 @@ int main(void)
     clock_init(SYSTEM_CLOCK_160M);      // 时钟配置及系统初始化<务必保留>
     
     debug_init();                       // 调试串口初始化
-    pmw3901_demo_init();                // PMW3901 初始化，查看 g_pmw3901_flow_data 即可观察光流数据
+    vl53l0x_demo_init();                // VL53L0X 初始化，查看 g_vl53l0x_distance_data 即可观察测距数据
 
     for(;;)
     {
-        pmw3901_demo_update();          // 持续刷新光流数据结构体
+        vl53l0x_demo_update();          // 持续刷新测距数据结构体
         system_delay_ms(20);            // 50Hz 刷新，便于调试观察
     }
 }
