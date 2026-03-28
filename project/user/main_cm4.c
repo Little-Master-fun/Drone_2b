@@ -34,7 +34,7 @@
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
-#include "drivers/driver_vl53l0x.h"
+#include "drivers/driver_vl53l1x.h"
 
 // 打开新的工程或者工程移动了位置务必执行以下操作
 // 第一步 关闭上面所有打开的文件
@@ -48,65 +48,68 @@
 
 typedef struct
 {
-    driver_vl53l0x_status_struct status;
-    driver_vl53l0x_data_struct distance;
+    driver_vl53l1x_status_struct status;
+    driver_vl53l1x_data_struct distance;
     uint32 update_count;
     uint8 init_done;
     uint8 read_ok;
     int8 text[96];
-} app_vl53l0x_demo_data_struct;
+} app_vl53l1x_demo_data_struct;
 
-app_vl53l0x_demo_data_struct g_vl53l0x_distance_data;
+app_vl53l1x_demo_data_struct g_vl53l1x_distance_data;
 
-static void vl53l0x_demo_init (void)
+static void vl53l1x_demo_init (void)
 {
-    memset(&g_vl53l0x_distance_data, 0, sizeof(g_vl53l0x_distance_data));
+    memset(&g_vl53l1x_distance_data, 0, sizeof(g_vl53l1x_distance_data));
 
-    if (0 == driver_vl53l0x_init())
+    if (0U == driver_vl53l1x_init())
     {
-        g_vl53l0x_distance_data.init_done = 1U;
-        g_vl53l0x_distance_data.read_ok = 1U;
-        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x init ok");
+        g_vl53l1x_distance_data.init_done = 1U;
+        g_vl53l1x_distance_data.read_ok = 1U;
+        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x init ok");
     }
     else
     {
-        g_vl53l0x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x init failed");
+        g_vl53l1x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x init failed");
     }
 
-    g_vl53l0x_distance_data.status = driver_vl53l0x_get_status();
-    g_vl53l0x_distance_data.init_done = g_vl53l0x_distance_data.status.initialized;
+    g_vl53l1x_distance_data.status = driver_vl53l1x_get_status();
+    g_vl53l1x_distance_data.init_done = g_vl53l1x_distance_data.status.initialized;
 }
 
-static void vl53l0x_demo_update (void)
+static void vl53l1x_demo_update (void)
 {
     uint8 ret = 0U;
 
-    g_vl53l0x_distance_data.status = driver_vl53l0x_get_status();
-    g_vl53l0x_distance_data.init_done = g_vl53l0x_distance_data.status.initialized;
+    g_vl53l1x_distance_data.status = driver_vl53l1x_get_status();
+    g_vl53l1x_distance_data.init_done = g_vl53l1x_distance_data.status.initialized;
 
-    if (!g_vl53l0x_distance_data.init_done)
+    if (!g_vl53l1x_distance_data.init_done)
     {
-        g_vl53l0x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x not ready");
+        g_vl53l1x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l1x_distance_data.text,
+                   "vl53l1x not ready detect:%d model:0x%02x",
+                   (int32)g_vl53l1x_distance_data.status.detect_status,
+                   (int32)g_vl53l1x_distance_data.status.model_id);
         return;
     }
 
-    ret = driver_vl53l0x_read(&g_vl53l0x_distance_data.distance);
+    ret = driver_vl53l1x_read(&g_vl53l1x_distance_data.distance);
     if (0U != ret)
     {
-        g_vl53l0x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l0x_distance_data.text, "vl53l0x read error:%d", ret);
+        g_vl53l1x_distance_data.read_ok = 0U;
+        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x read error:%d", ret);
         return;
     }
 
-    g_vl53l0x_distance_data.update_count += 1U;
-    g_vl53l0x_distance_data.read_ok = 1U;
-    zf_sprintf(g_vl53l0x_distance_data.text,
+    g_vl53l1x_distance_data.update_count += 1U;
+    g_vl53l1x_distance_data.read_ok = 1U;
+    zf_sprintf(g_vl53l1x_distance_data.text,
                "dist:%dmm status:%d ready:%d",
-               (int32)g_vl53l0x_distance_data.distance.distance_mm,
-               (int32)g_vl53l0x_distance_data.distance.range_status,
-               (int32)g_vl53l0x_distance_data.distance.data_ready);
+               (int32)g_vl53l1x_distance_data.distance.distance_mm,
+               (int32)g_vl53l1x_distance_data.distance.range_status,
+               (int32)g_vl53l1x_distance_data.distance.data_ready);
 }
 
 int main(void)
@@ -114,11 +117,11 @@ int main(void)
     clock_init(SYSTEM_CLOCK_160M);      // 时钟配置及系统初始化<务必保留>
     
     debug_init();                       // 调试串口初始化
-    vl53l0x_demo_init();                // VL53L0X 初始化，查看 g_vl53l0x_distance_data 即可观察测距数据
+    vl53l1x_demo_init();                // VL53L1X 初始化，查看 g_vl53l1x_distance_data 即可观察测距数据
 
     for(;;)
     {
-        vl53l0x_demo_update();          // 持续刷新测距数据结构体
+        vl53l1x_demo_update();          // 持续刷新测距数据结构体
         system_delay_ms(20);            // 50Hz 刷新，便于调试观察
     }
 }

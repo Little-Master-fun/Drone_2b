@@ -2870,6 +2870,12 @@
             <file>
                 <name>$PROJ_DIR$\..\..\code\drivers\driver_vl53l0x.h</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_vl53l1x.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_vl53l1x.h</name>
+            </file>
         </group>
     </group>
     <group>
