@@ -46,6 +46,8 @@
 #define SCH16TK01_GYRO_SCALE_REV1_DPS_PER_LSB     (1.0f / 1600.0f)
 #define SCH16TK01_GYRO_SCALE_REV2_DPS_PER_LSB     (1.0f / 100.0f)
 #define SCH16TK01_DEG_TO_RAD                      (M_PI / 180.0f)
+#define SCH16TK01_GYRO_BIAS_CALIB_SAMPLES         (200U)
+#define SCH16TK01_GYRO_BIAS_CALIB_DELAY_MS        (5U)
 
 // 打开新的工程或者工程移动了位置务必执行以下操作
 // 第一步 关闭上面所有打开的文件
@@ -62,10 +64,18 @@ typedef struct
     float gyro_x_dps;
     float gyro_y_dps;
     float gyro_z_dps;
+    float gyro_bias_x_dps;
+    float gyro_bias_y_dps;
+    float gyro_bias_z_dps;
+    float gyro_x_corr_dps;
+    float gyro_y_corr_dps;
+    float gyro_z_corr_dps;
     float acc_x_mss;
     float acc_y_mss;
     float acc_z_mss;
     float temp_deg;
+    uint16 gyro_bias_sample_count;
+    uint8 gyro_bias_ready;
 } app_sch16tk01_scaled_data_struct;
 
 typedef struct
@@ -81,6 +91,73 @@ typedef struct
 } app_sch16tk01_demo_data_struct;
 
 app_sch16tk01_demo_data_struct g_sch16tk01_data;
+
+static float sch16tk01_get_gyro_scale_dps_per_lsb (uint8 chip_version)
+{
+    if (chip_version == DRIVER_SCH16TK01_CHIP_VERSION_REV2)
+    {
+        return SCH16TK01_GYRO_SCALE_REV2_DPS_PER_LSB;
+    }
+
+    return SCH16TK01_GYRO_SCALE_REV1_DPS_PER_LSB;
+}
+
+static void sch16tk01_update_scaled_data (void)
+{
+    float gyro_scale_dps_per_lsb = sch16tk01_get_gyro_scale_dps_per_lsb(g_sch16tk01_data.status.chip_version);
+
+    g_sch16tk01_data.scaled.gyro_x_dps = (float)g_sch16tk01_data.imu.gyro_x_raw * gyro_scale_dps_per_lsb;
+    g_sch16tk01_data.scaled.gyro_y_dps = (float)g_sch16tk01_data.imu.gyro_y_raw * gyro_scale_dps_per_lsb;
+    g_sch16tk01_data.scaled.gyro_z_dps = (float)g_sch16tk01_data.imu.gyro_z_raw * gyro_scale_dps_per_lsb;
+
+    g_sch16tk01_data.scaled.gyro_x_corr_dps = g_sch16tk01_data.scaled.gyro_x_dps - g_sch16tk01_data.scaled.gyro_bias_x_dps;
+    g_sch16tk01_data.scaled.gyro_y_corr_dps = g_sch16tk01_data.scaled.gyro_y_dps - g_sch16tk01_data.scaled.gyro_bias_y_dps;
+    g_sch16tk01_data.scaled.gyro_z_corr_dps = g_sch16tk01_data.scaled.gyro_z_dps - g_sch16tk01_data.scaled.gyro_bias_z_dps;
+
+    g_sch16tk01_data.scaled.acc_x_mss = (float)g_sch16tk01_data.imu.acc_x_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.acc_y_mss = (float)g_sch16tk01_data.imu.acc_y_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.acc_z_mss = (float)g_sch16tk01_data.imu.acc_z_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.temp_deg = (float)g_sch16tk01_data.imu.temp_cdeg / 100.0f;
+}
+
+static void sch16tk01_calibrate_gyro_bias (void)
+{
+    driver_sch16tk01_data_struct sample = {0};
+    float gyro_scale_dps_per_lsb = sch16tk01_get_gyro_scale_dps_per_lsb(g_sch16tk01_data.status.chip_version);
+    float sum_x = 0.0f;
+    float sum_y = 0.0f;
+    float sum_z = 0.0f;
+    uint16 valid_samples = 0U;
+    uint16 i = 0U;
+
+    g_sch16tk01_data.scaled.gyro_bias_x_dps = 0.0f;
+    g_sch16tk01_data.scaled.gyro_bias_y_dps = 0.0f;
+    g_sch16tk01_data.scaled.gyro_bias_z_dps = 0.0f;
+    g_sch16tk01_data.scaled.gyro_bias_sample_count = 0U;
+    g_sch16tk01_data.scaled.gyro_bias_ready = 0U;
+
+    for (i = 0U; i < SCH16TK01_GYRO_BIAS_CALIB_SAMPLES; ++i)
+    {
+        if (0U == driver_sch16tk01_read(&sample))
+        {
+            sum_x += (float)sample.gyro_x_raw * gyro_scale_dps_per_lsb;
+            sum_y += (float)sample.gyro_y_raw * gyro_scale_dps_per_lsb;
+            sum_z += (float)sample.gyro_z_raw * gyro_scale_dps_per_lsb;
+            valid_samples++;
+        }
+
+        system_delay_ms(SCH16TK01_GYRO_BIAS_CALIB_DELAY_MS);
+    }
+
+    if (0U != valid_samples)
+    {
+        g_sch16tk01_data.scaled.gyro_bias_x_dps = sum_x / (float)valid_samples;
+        g_sch16tk01_data.scaled.gyro_bias_y_dps = sum_y / (float)valid_samples;
+        g_sch16tk01_data.scaled.gyro_bias_z_dps = sum_z / (float)valid_samples;
+        g_sch16tk01_data.scaled.gyro_bias_sample_count = valid_samples;
+        g_sch16tk01_data.scaled.gyro_bias_ready = 1U;
+    }
+}
 
 static void sch16tk01_demo_init (void)
 {
@@ -101,13 +178,16 @@ static void sch16tk01_demo_init (void)
 
     g_sch16tk01_data.status = driver_sch16tk01_get_status();
     g_sch16tk01_data.init_done = g_sch16tk01_data.status.initialized;
+    if (g_sch16tk01_data.init_done)
+    {
+        sch16tk01_calibrate_gyro_bias();
+    }
     g_sch16tk01_data.attitude = attitude_estimator_6axis_get_state();
 }
 
 static void sch16tk01_demo_update (void)
 {
     uint8 ret = 0U;
-    float gyro_scale_dps_per_lsb = SCH16TK01_GYRO_SCALE_REV1_DPS_PER_LSB;
 
     g_sch16tk01_data.status = driver_sch16tk01_get_status();
     g_sch16tk01_data.init_done = g_sch16tk01_data.status.initialized;
@@ -131,25 +211,14 @@ static void sch16tk01_demo_update (void)
         return;
     }
 
-    if (g_sch16tk01_data.status.chip_version == DRIVER_SCH16TK01_CHIP_VERSION_REV2)
-    {
-        gyro_scale_dps_per_lsb = SCH16TK01_GYRO_SCALE_REV2_DPS_PER_LSB;
-    }
+    sch16tk01_update_scaled_data();
 
-    g_sch16tk01_data.scaled.gyro_x_dps = (float)g_sch16tk01_data.imu.gyro_x_raw * gyro_scale_dps_per_lsb;
-    g_sch16tk01_data.scaled.gyro_y_dps = (float)g_sch16tk01_data.imu.gyro_y_raw * gyro_scale_dps_per_lsb;
-    g_sch16tk01_data.scaled.gyro_z_dps = (float)g_sch16tk01_data.imu.gyro_z_raw * gyro_scale_dps_per_lsb;
-    g_sch16tk01_data.scaled.acc_x_mss = (float)g_sch16tk01_data.imu.acc_x_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
-    g_sch16tk01_data.scaled.acc_y_mss = (float)g_sch16tk01_data.imu.acc_y_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
-    g_sch16tk01_data.scaled.acc_z_mss = (float)g_sch16tk01_data.imu.acc_z_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
-    g_sch16tk01_data.scaled.temp_deg = (float)g_sch16tk01_data.imu.temp_cdeg / 100.0f;
-
-    (void)attitude_estimator_6axis_update(g_sch16tk01_data.scaled.gyro_x_dps * SCH16TK01_DEG_TO_RAD,
-                                          g_sch16tk01_data.scaled.gyro_y_dps * SCH16TK01_DEG_TO_RAD,
-                                          g_sch16tk01_data.scaled.gyro_z_dps * SCH16TK01_DEG_TO_RAD,
-                                          g_sch16tk01_data.scaled.acc_x_mss,
-                                          g_sch16tk01_data.scaled.acc_y_mss,
-                                          g_sch16tk01_data.scaled.acc_z_mss,
+    (void)attitude_estimator_6axis_update(g_sch16tk01_data.scaled.gyro_x_corr_dps * SCH16TK01_DEG_TO_RAD,
+                                          g_sch16tk01_data.scaled.gyro_y_corr_dps * SCH16TK01_DEG_TO_RAD,
+                                          g_sch16tk01_data.scaled.gyro_z_corr_dps * SCH16TK01_DEG_TO_RAD,
+                                          -g_sch16tk01_data.scaled.acc_x_mss,
+                                          -g_sch16tk01_data.scaled.acc_y_mss,
+                                          -g_sch16tk01_data.scaled.acc_z_mss,
                                           SCH16TK01_DEMO_DT_S);
     g_sch16tk01_data.attitude = attitude_estimator_6axis_get_state();
 
@@ -160,9 +229,9 @@ static void sch16tk01_demo_update (void)
                (int32)g_sch16tk01_data.attitude.roll_deg,
                (int32)g_sch16tk01_data.attitude.pitch_deg,
                (int32)g_sch16tk01_data.attitude.yaw_deg,
-               (int32)g_sch16tk01_data.scaled.gyro_x_dps,
-               (int32)g_sch16tk01_data.scaled.gyro_y_dps,
-               (int32)g_sch16tk01_data.scaled.gyro_z_dps);
+               (int32)g_sch16tk01_data.scaled.gyro_x_corr_dps,
+               (int32)g_sch16tk01_data.scaled.gyro_y_corr_dps,
+               (int32)g_sch16tk01_data.scaled.gyro_z_corr_dps);
 }
 
 int main(void)
