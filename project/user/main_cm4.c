@@ -34,7 +34,18 @@
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
-#include "drivers/driver_vl53l1x.h"
+#include "drivers/driver_sch16tk01.h"
+#include "estimator/attitude_estimator_6axis.h"
+
+#ifndef M_PI
+#define M_PI 3.1415926f
+#endif
+
+#define SCH16TK01_DEMO_DT_S                       (0.02f)
+#define SCH16TK01_ACC_SCALE_MSS_PER_LSB           (1.0f / 3200.0f)
+#define SCH16TK01_GYRO_SCALE_REV1_DPS_PER_LSB     (1.0f / 1600.0f)
+#define SCH16TK01_GYRO_SCALE_REV2_DPS_PER_LSB     (1.0f / 100.0f)
+#define SCH16TK01_DEG_TO_RAD                      (M_PI / 180.0f)
 
 // 打开新的工程或者工程移动了位置务必执行以下操作
 // 第一步 关闭上面所有打开的文件
@@ -48,68 +59,110 @@
 
 typedef struct
 {
-    driver_vl53l1x_status_struct status;
-    driver_vl53l1x_data_struct distance;
+    float gyro_x_dps;
+    float gyro_y_dps;
+    float gyro_z_dps;
+    float acc_x_mss;
+    float acc_y_mss;
+    float acc_z_mss;
+    float temp_deg;
+} app_sch16tk01_scaled_data_struct;
+
+typedef struct
+{
+    driver_sch16tk01_status_struct status;
+    driver_sch16tk01_data_struct imu;
+    app_sch16tk01_scaled_data_struct scaled;
+    attitude_estimator_6axis_state_struct attitude;
     uint32 update_count;
     uint8 init_done;
     uint8 read_ok;
-    int8 text[96];
-} app_vl53l1x_demo_data_struct;
+    int8 text[128];
+} app_sch16tk01_demo_data_struct;
 
-app_vl53l1x_demo_data_struct g_vl53l1x_distance_data;
+app_sch16tk01_demo_data_struct g_sch16tk01_data;
 
-static void vl53l1x_demo_init (void)
+static void sch16tk01_demo_init (void)
 {
-    memset(&g_vl53l1x_distance_data, 0, sizeof(g_vl53l1x_distance_data));
+    memset(&g_sch16tk01_data, 0, sizeof(g_sch16tk01_data));
+    attitude_estimator_6axis_init();
 
-    if (0U == driver_vl53l1x_init())
+    if (0U == driver_sch16tk01_init())
     {
-        g_vl53l1x_distance_data.init_done = 1U;
-        g_vl53l1x_distance_data.read_ok = 1U;
-        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x init ok");
+        g_sch16tk01_data.init_done = 1U;
+        g_sch16tk01_data.read_ok = 1U;
+        zf_sprintf(g_sch16tk01_data.text, "sch16tk01 init ok");
     }
     else
     {
-        g_vl53l1x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x init failed");
+        g_sch16tk01_data.read_ok = 0U;
+        zf_sprintf(g_sch16tk01_data.text, "sch16tk01 init failed");
     }
 
-    g_vl53l1x_distance_data.status = driver_vl53l1x_get_status();
-    g_vl53l1x_distance_data.init_done = g_vl53l1x_distance_data.status.initialized;
+    g_sch16tk01_data.status = driver_sch16tk01_get_status();
+    g_sch16tk01_data.init_done = g_sch16tk01_data.status.initialized;
+    g_sch16tk01_data.attitude = attitude_estimator_6axis_get_state();
 }
 
-static void vl53l1x_demo_update (void)
+static void sch16tk01_demo_update (void)
 {
     uint8 ret = 0U;
+    float gyro_scale_dps_per_lsb = SCH16TK01_GYRO_SCALE_REV1_DPS_PER_LSB;
 
-    g_vl53l1x_distance_data.status = driver_vl53l1x_get_status();
-    g_vl53l1x_distance_data.init_done = g_vl53l1x_distance_data.status.initialized;
+    g_sch16tk01_data.status = driver_sch16tk01_get_status();
+    g_sch16tk01_data.init_done = g_sch16tk01_data.status.initialized;
 
-    if (!g_vl53l1x_distance_data.init_done)
+    if (!g_sch16tk01_data.init_done)
     {
-        g_vl53l1x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l1x_distance_data.text,
-                   "vl53l1x not ready detect:%d model:0x%02x",
-                   (int32)g_vl53l1x_distance_data.status.detect_status,
-                   (int32)g_vl53l1x_distance_data.status.model_id);
+        g_sch16tk01_data.read_ok = 0U;
+        zf_sprintf(g_sch16tk01_data.text,
+                   "sch not ready detect:%d asic:0x%04x comp:0x%04x",
+                   (int32)g_sch16tk01_data.status.detect_status,
+                   (int32)g_sch16tk01_data.status.asic_id,
+                   (int32)g_sch16tk01_data.status.comp_id);
         return;
     }
 
-    ret = driver_vl53l1x_read(&g_vl53l1x_distance_data.distance);
+    ret = driver_sch16tk01_read(&g_sch16tk01_data.imu);
     if (0U != ret)
     {
-        g_vl53l1x_distance_data.read_ok = 0U;
-        zf_sprintf(g_vl53l1x_distance_data.text, "vl53l1x read error:%d", ret);
+        g_sch16tk01_data.read_ok = 0U;
+        zf_sprintf(g_sch16tk01_data.text, "sch16tk01 read error:%d", ret);
         return;
     }
 
-    g_vl53l1x_distance_data.update_count += 1U;
-    g_vl53l1x_distance_data.read_ok = 1U;
-    zf_sprintf(g_vl53l1x_distance_data.text,
-               "dist:%dmm status:%d ready:%d",
-               (int32)g_vl53l1x_distance_data.distance.distance_mm,
-               (int32)g_vl53l1x_distance_data.distance.range_status,
-               (int32)g_vl53l1x_distance_data.distance.data_ready);
+    if (g_sch16tk01_data.status.chip_version == DRIVER_SCH16TK01_CHIP_VERSION_REV2)
+    {
+        gyro_scale_dps_per_lsb = SCH16TK01_GYRO_SCALE_REV2_DPS_PER_LSB;
+    }
+
+    g_sch16tk01_data.scaled.gyro_x_dps = (float)g_sch16tk01_data.imu.gyro_x_raw * gyro_scale_dps_per_lsb;
+    g_sch16tk01_data.scaled.gyro_y_dps = (float)g_sch16tk01_data.imu.gyro_y_raw * gyro_scale_dps_per_lsb;
+    g_sch16tk01_data.scaled.gyro_z_dps = (float)g_sch16tk01_data.imu.gyro_z_raw * gyro_scale_dps_per_lsb;
+    g_sch16tk01_data.scaled.acc_x_mss = (float)g_sch16tk01_data.imu.acc_x_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.acc_y_mss = (float)g_sch16tk01_data.imu.acc_y_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.acc_z_mss = (float)g_sch16tk01_data.imu.acc_z_raw * SCH16TK01_ACC_SCALE_MSS_PER_LSB;
+    g_sch16tk01_data.scaled.temp_deg = (float)g_sch16tk01_data.imu.temp_cdeg / 100.0f;
+
+    (void)attitude_estimator_6axis_update(g_sch16tk01_data.scaled.gyro_x_dps * SCH16TK01_DEG_TO_RAD,
+                                          g_sch16tk01_data.scaled.gyro_y_dps * SCH16TK01_DEG_TO_RAD,
+                                          g_sch16tk01_data.scaled.gyro_z_dps * SCH16TK01_DEG_TO_RAD,
+                                          g_sch16tk01_data.scaled.acc_x_mss,
+                                          g_sch16tk01_data.scaled.acc_y_mss,
+                                          g_sch16tk01_data.scaled.acc_z_mss,
+                                          SCH16TK01_DEMO_DT_S);
+    g_sch16tk01_data.attitude = attitude_estimator_6axis_get_state();
+
+    g_sch16tk01_data.update_count += 1U;
+    g_sch16tk01_data.read_ok = 1U;
+    zf_sprintf(g_sch16tk01_data.text,
+               "r:%d p:%d y:%d gx:%d gy:%d gz:%d",
+               (int32)g_sch16tk01_data.attitude.roll_deg,
+               (int32)g_sch16tk01_data.attitude.pitch_deg,
+               (int32)g_sch16tk01_data.attitude.yaw_deg,
+               (int32)g_sch16tk01_data.scaled.gyro_x_dps,
+               (int32)g_sch16tk01_data.scaled.gyro_y_dps,
+               (int32)g_sch16tk01_data.scaled.gyro_z_dps);
 }
 
 int main(void)
@@ -117,11 +170,11 @@ int main(void)
     clock_init(SYSTEM_CLOCK_160M);      // 时钟配置及系统初始化<务必保留>
     
     debug_init();                       // 调试串口初始化
-    vl53l1x_demo_init();                // VL53L1X 初始化，查看 g_vl53l1x_distance_data 即可观察测距数据
+    sch16tk01_demo_init();              // SCH16TK01 初始化，查看 g_sch16tk01_data 即可观察原始 IMU 数据
 
     for(;;)
     {
-        vl53l1x_demo_update();          // 持续刷新测距数据结构体
+        sch16tk01_demo_update();        // 持续刷新 SCH16TK01 数据结构体
         system_delay_ms(20);            // 50Hz 刷新，便于调试观察
     }
 }
