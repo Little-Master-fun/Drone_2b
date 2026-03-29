@@ -435,11 +435,88 @@ const
 cy_systemIntr_Handler * Cy_SysInt_SystemIrqUserTableRamPointer = Cy_SystemIrqUserTable;
 #endif      
 
+volatile uint32_t g_unhandled_irq_ipsr = 0UL;
+volatile uint32_t g_unhandled_irq_number = 0UL;
+volatile uint32_t g_unhandled_sysint_status_raw = 0UL;
+volatile uint32_t g_unhandled_sysint_idx = 0UL;
+volatile uint32_t g_unhandled_sysint_valid = 0UL;
 
 void Cy_DefaultUserHandler(void)
 {
-    // This IRQ occurred because CPU attempted to call IRQ that has not been mapped to user function
-    while(1);
+    g_unhandled_irq_ipsr = (uint32_t)__get_IPSR();
+    g_unhandled_irq_number = (g_unhandled_irq_ipsr >= 16UL) ? (g_unhandled_irq_ipsr - 16UL) : g_unhandled_irq_ipsr;
+    g_unhandled_sysint_status_raw = 0UL;
+    g_unhandled_sysint_idx = 0UL;
+    g_unhandled_sysint_valid = 0UL;
+
+    switch ((IRQn_Type)g_unhandled_irq_number)
+    {
+        case CPUIntIdx0_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT0_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT0_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx1_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT1_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT1_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx2_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT2_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT2_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx3_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT3_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT3_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx4_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT4_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT4_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx5_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT5_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT5_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx6_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT6_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT6_STATUS.u32Register;
+#endif
+            break;
+        case CPUIntIdx7_IRQn:
+#if CY_CPU_CORTEX_M0P
+            g_unhandled_sysint_status_raw = CPUSS->unCM0_INT7_STATUS.u32Register;
+#else
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT7_STATUS.u32Register;
+#endif
+            break;
+        default:
+            break;
+    }
+
+    g_unhandled_sysint_idx = (g_unhandled_sysint_status_raw & 0x3FFUL);
+    g_unhandled_sysint_valid = (g_unhandled_sysint_status_raw >> 31) & 0x1UL;
+
+    while(1)
+    {
+    }
 }
 
 
