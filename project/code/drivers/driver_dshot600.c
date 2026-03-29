@@ -5,7 +5,7 @@
 #define DRIVER_DSHOT600_COMMAND_MAX           (47U)
 
 #define DRIVER_DSHOT600_MOTOR_PIN_SHIFT       (0U)
-#define DRIVER_DSHOT600_MOTOR_PORT_INDEX      (5U)
+#define DRIVER_DSHOT600_MOTOR_PORT_INDEX      (18U)
 
 #define DRIVER_DSHOT600_GPIO_BASE_ADDR        (0x40310000UL)
 #define DRIVER_DSHOT600_GPIO_PORT_STRIDE      (0x80UL)
@@ -121,10 +121,10 @@ uint8 driver_dshot600_init (void)
 {
     uint8 i = 0U;
 
-    gpio_init(P5_0, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P5_1, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P5_2, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P5_3, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P18_0, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P18_1, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P18_2, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P18_3, GPO, GPIO_LOW, GPO_PUSH_PULL);
 
     g_dshot600.gpio_set_addr = DRIVER_DSHOT600_GPIO_BASE_ADDR +
                                ((uint32)DRIVER_DSHOT600_MOTOR_PORT_INDEX * DRIVER_DSHOT600_GPIO_PORT_STRIDE) +
