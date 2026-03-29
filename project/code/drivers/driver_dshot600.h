@@ -4,6 +4,7 @@
 #include "zf_common_typedef.h"
 
 #define DRIVER_DSHOT600_MOTOR_COUNT            (4U)
+#define DRIVER_DSHOT600_THROTTLE_MIN           (48U)
 #define DRIVER_DSHOT600_THROTTLE_MAX           (2047U)
 
 uint8 driver_dshot600_init(void);

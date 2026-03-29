@@ -5,7 +5,7 @@
 #define DRIVER_DSHOT600_COMMAND_MAX           (47U)
 
 #define DRIVER_DSHOT600_MOTOR_PIN_SHIFT       (0U)
-#define DRIVER_DSHOT600_MOTOR_PORT_INDEX      (18U)
+#define DRIVER_DSHOT600_MOTOR_PORT_INDEX      (5U)
 
 #define DRIVER_DSHOT600_GPIO_BASE_ADDR        (0x40310000UL)
 #define DRIVER_DSHOT600_GPIO_PORT_STRIDE      (0x80UL)
@@ -25,7 +25,7 @@ typedef struct
     uint32 gpio_set_addr;
     uint32 gpio_clr_addr;
     uint32 gpio_all_mask;
-    uint32 cycles_per_us;
+    uint32 core_clock_hz;
     uint32 bit_cycles;
     uint32 t0h_cycles;
     uint32 t1h_cycles;
@@ -34,9 +34,15 @@ typedef struct
 
 static driver_dshot600_state_struct g_dshot600 = {0};
 
-static uint32 driver_dshot600_ns_to_cycles (uint32 ns, uint32 cycles_per_us)
+static uint32 driver_dshot600_ns_to_cycles (uint32 ns, uint32 core_clock_hz)
 {
-    uint64 cycles = ((uint64)ns * (uint64)cycles_per_us + 999ULL) / 1000ULL;
+    uint64 cycles = ((uint64)ns * (uint64)core_clock_hz + 999999999ULL) / 1000000000ULL;
+    return (uint32)cycles;
+}
+
+static uint32 driver_dshot600_us_to_cycles (uint32 us, uint32 core_clock_hz)
+{
+    uint64 cycles = ((uint64)us * (uint64)core_clock_hz + 999999ULL) / 1000000ULL;
     return (uint32)cycles;
 }
 
@@ -62,17 +68,30 @@ static void driver_dshot600_wait_until_cycle (uint32 target_cycle)
 static uint8 driver_dshot600_send_packets (uint16 p0, uint16 p1, uint16 p2, uint16 p3)
 {
     uint16 bit_mask = 0U;
+    uint8 bit_index = 0U;
     uint32 start_cycle = 0U;
-    uint32 clear_0_mask = 0U;
+    uint32 clear_0_masks[16] = {0};
 
     if (!g_dshot600.initialized)
     {
         return 1U;
     }
 
+    for (bit_mask = 0x8000U, bit_index = 0U; bit_mask != 0U; bit_mask >>= 1U, bit_index++)
+    {
+        uint32 clear_0_mask = 0U;
+
+        if ((p0 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 0U));
+        if ((p1 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 1U));
+        if ((p2 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 2U));
+        if ((p3 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 3U));
+
+        clear_0_masks[bit_index] = clear_0_mask;
+    }
+
     __disable_irq();
 
-    for (bit_mask = 0x8000U; bit_mask != 0U; bit_mask >>= 1U)
+    for (bit_mask = 0x8000U, bit_index = 0U; bit_mask != 0U; bit_mask >>= 1U, bit_index++)
     {
         start_cycle = DWT->CYCCNT;
 
@@ -80,15 +99,9 @@ static uint8 driver_dshot600_send_packets (uint16 p0, uint16 p1, uint16 p2, uint
 
         driver_dshot600_wait_until_cycle(start_cycle + g_dshot600.t0h_cycles);
 
-        clear_0_mask = 0U;
-        if ((p0 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 0U));
-        if ((p1 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 1U));
-        if ((p2 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 2U));
-        if ((p3 & bit_mask) == 0U) clear_0_mask |= (1UL << (DRIVER_DSHOT600_MOTOR_PIN_SHIFT + 3U));
-
-        if (clear_0_mask != 0U)
+        if (clear_0_masks[bit_index] != 0U)
         {
-            (*(volatile uint32 *)g_dshot600.gpio_clr_addr) = clear_0_mask;
+            (*(volatile uint32 *)g_dshot600.gpio_clr_addr) = clear_0_masks[bit_index];
         }
 
         driver_dshot600_wait_until_cycle(start_cycle + g_dshot600.t1h_cycles);
@@ -108,10 +121,10 @@ uint8 driver_dshot600_init (void)
 {
     uint8 i = 0U;
 
-    gpio_init(P18_0, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P18_1, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P18_2, GPO, GPIO_LOW, GPO_PUSH_PULL);
-    gpio_init(P18_3, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P5_0, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P5_1, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P5_2, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    gpio_init(P5_3, GPO, GPIO_LOW, GPO_PUSH_PULL);
 
     g_dshot600.gpio_set_addr = DRIVER_DSHOT600_GPIO_BASE_ADDR +
                                ((uint32)DRIVER_DSHOT600_MOTOR_PORT_INDEX * DRIVER_DSHOT600_GPIO_PORT_STRIDE) +
@@ -122,11 +135,11 @@ uint8 driver_dshot600_init (void)
     g_dshot600.gpio_all_mask = (uint32)(0x0FUL << DRIVER_DSHOT600_MOTOR_PIN_SHIFT);
 
     SystemCoreClockUpdate();
-    g_dshot600.cycles_per_us = SystemCoreClock / 1000000UL;
-    g_dshot600.bit_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_BIT_NS, g_dshot600.cycles_per_us);
-    g_dshot600.t0h_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_T0H_NS, g_dshot600.cycles_per_us);
-    g_dshot600.t1h_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_T1H_NS, g_dshot600.cycles_per_us);
-    g_dshot600.reset_cycles = g_dshot600.cycles_per_us * DRIVER_DSHOT600_RESET_US;
+    g_dshot600.core_clock_hz = SystemCoreClock;
+    g_dshot600.bit_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_BIT_NS, g_dshot600.core_clock_hz);
+    g_dshot600.t0h_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_T0H_NS, g_dshot600.core_clock_hz);
+    g_dshot600.t1h_cycles = driver_dshot600_ns_to_cycles(DRIVER_DSHOT600_T1H_NS, g_dshot600.core_clock_hz);
+    g_dshot600.reset_cycles = driver_dshot600_us_to_cycles(DRIVER_DSHOT600_RESET_US, g_dshot600.core_clock_hz);
 
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0U;
@@ -153,6 +166,10 @@ uint8 driver_dshot600_set_throttle (uint8 motor_index, uint16 throttle, uint8 te
     if (throttle > DRIVER_DSHOT600_THROTTLE_MAX)
     {
         throttle = DRIVER_DSHOT600_THROTTLE_MAX;
+    }
+    if ((throttle != 0U) && (throttle < DRIVER_DSHOT600_THROTTLE_MIN))
+    {
+        throttle = DRIVER_DSHOT600_THROTTLE_MIN;
     }
 
     g_dshot600.throttle[motor_index] = throttle;
