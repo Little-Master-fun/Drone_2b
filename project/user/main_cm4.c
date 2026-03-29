@@ -37,6 +37,7 @@
 #include "task.h"
 #include "tasks.h"
 #include "zf_common_headfile.h"
+#include "tasks_blink.h"
 
 // 打开新的工程或者工程移动了位置务必执行以下操作
 // 第一步 关闭上面所有打开的文件
@@ -54,6 +55,7 @@ int main(void)
     debug_init();                       // 调试串口初始化
 
     tasks_init_all();
+    tasks_blink_init();
     vTaskStartScheduler();
 
     while(1)

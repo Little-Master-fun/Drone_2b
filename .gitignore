@@ -1,6 +1,7 @@
 # Build directories
 Debug_m7_0/
 Debug_m7_1/
+Debug_m4/
 
 # IDE specific files
 .vscode/

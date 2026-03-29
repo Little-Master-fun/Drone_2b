@@ -3,7 +3,7 @@
 #include "tasks_blink.h"
 #include "zf_common_headfile.h"
 
-#define TASKS_BLINK_LED_PIN            (P08_1)
+#define TASKS_BLINK_LED_PIN            (P23_7)
 #define TASKS_BLINK_STACK_WORDS        (128U)
 #define TASKS_BLINK_PRIORITY           (1U)
 #define TASKS_BLINK_PERIOD_TICKS       pdMS_TO_TICKS(500U)
