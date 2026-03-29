@@ -36,6 +36,59 @@
 
 #include "zf_common_headfile.h"
 
+volatile uint32 g_unhandled_irq_ipsr = 0U;
+volatile uint32 g_unhandled_irq_number = 0U;
+volatile uint32 g_unhandled_sysint_status_raw = 0U;
+volatile uint32 g_unhandled_sysint_idx = 0U;
+volatile uint32 g_unhandled_sysint_valid = 0U;
+
+void Cy_DefaultUserHandler (void)
+{
+    g_unhandled_irq_ipsr = (uint32)__get_IPSR();
+    g_unhandled_irq_number = (g_unhandled_irq_ipsr >= 16U) ? (g_unhandled_irq_ipsr - 16U) : g_unhandled_irq_ipsr;
+
+    g_unhandled_sysint_status_raw = 0U;
+    g_unhandled_sysint_idx = 0U;
+    g_unhandled_sysint_valid = 0U;
+
+    switch ((IRQn_Type)g_unhandled_irq_number)
+    {
+        case CPUIntIdx0_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT0_STATUS.u32Register;
+            break;
+        case CPUIntIdx1_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT1_STATUS.u32Register;
+            break;
+        case CPUIntIdx2_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT2_STATUS.u32Register;
+            break;
+        case CPUIntIdx3_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT3_STATUS.u32Register;
+            break;
+        case CPUIntIdx4_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT4_STATUS.u32Register;
+            break;
+        case CPUIntIdx5_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT5_STATUS.u32Register;
+            break;
+        case CPUIntIdx6_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT6_STATUS.u32Register;
+            break;
+        case CPUIntIdx7_IRQn:
+            g_unhandled_sysint_status_raw = CPUSS->unCM4_INT7_STATUS.u32Register;
+            break;
+        default:
+            break;
+    }
+
+    g_unhandled_sysint_idx = (g_unhandled_sysint_status_raw & 0x3FFUL);
+    g_unhandled_sysint_valid = (g_unhandled_sysint_status_raw >> 31) & 0x1UL;
+
+    while (1)
+    {
+    }
+}
+
 // **************************** PIT中断函数 ****************************
 void pit0_ch0_isr()                     // 定时器通道 0 周期中断服务函数      
 {

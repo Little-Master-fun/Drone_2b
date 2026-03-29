@@ -39,6 +39,13 @@ static TaskHandle_t g_imu_task_handle = 0;
 static TaskHandle_t g_flow_task_handle = 0;
 static TaskHandle_t g_tof_task_handle = 0;
 
+volatile uint32 g_sensor_imu_task_create_status = 0U;
+volatile uint32 g_sensor_flow_task_create_status = 0U;
+volatile uint32 g_sensor_tof_task_create_status = 0U;
+volatile uint32 g_sensor_imu_task_entry_count = 0U;
+volatile uint32 g_sensor_flow_task_entry_count = 0U;
+volatile uint32 g_sensor_tof_task_entry_count = 0U;
+
 static float g_gyro_bias_x_dps = 0.0f;
 static float g_gyro_bias_y_dps = 0.0f;
 static float g_gyro_bias_z_dps = 0.0f;
@@ -270,6 +277,7 @@ static void imu_task_entry (void *parameter)
     uint8 imu_inited = 0U;
 
     (void)parameter;
+    g_sensor_imu_task_entry_count++;
 
     while (1)
     {
@@ -312,6 +320,7 @@ static void flow_task_entry (void *parameter)
     uint8 flow_init_ret = 0U;
 
     (void)parameter;
+    g_sensor_flow_task_entry_count++;
 
     while (1)
     {
@@ -363,6 +372,7 @@ static void tof_task_entry (void *parameter)
     uint8 tof_init_ret = 0U;
 
     (void)parameter;
+    g_sensor_tof_task_entry_count++;
 
     while (1)
     {
@@ -410,16 +420,19 @@ void tasks_sensor_init (void)
 {
     if (g_imu_task_handle == 0)
     {
-        xTaskCreate(imu_task_entry, SENSOR_IMU_TASK_NAME, SENSOR_IMU_TASK_STACK_WORDS, 0, SENSOR_IMU_TASK_PRIORITY, &g_imu_task_handle);
+        g_sensor_imu_task_create_status =
+            (uint32)xTaskCreate(imu_task_entry, SENSOR_IMU_TASK_NAME, SENSOR_IMU_TASK_STACK_WORDS, 0, SENSOR_IMU_TASK_PRIORITY, &g_imu_task_handle);
     }
 
     if (g_flow_task_handle == 0)
     {
-        xTaskCreate(flow_task_entry, SENSOR_FLOW_TASK_NAME, SENSOR_FLOW_TASK_STACK_WORDS, 0, SENSOR_FLOW_TASK_PRIORITY, &g_flow_task_handle);
+        g_sensor_flow_task_create_status =
+            (uint32)xTaskCreate(flow_task_entry, SENSOR_FLOW_TASK_NAME, SENSOR_FLOW_TASK_STACK_WORDS, 0, SENSOR_FLOW_TASK_PRIORITY, &g_flow_task_handle);
     }
 
     if (g_tof_task_handle == 0)
     {
-        xTaskCreate(tof_task_entry, SENSOR_TOF_TASK_NAME, SENSOR_TOF_TASK_STACK_WORDS, 0, SENSOR_TOF_TASK_PRIORITY, &g_tof_task_handle);
+        g_sensor_tof_task_create_status =
+            (uint32)xTaskCreate(tof_task_entry, SENSOR_TOF_TASK_NAME, SENSOR_TOF_TASK_STACK_WORDS, 0, SENSOR_TOF_TASK_PRIORITY, &g_tof_task_handle);
     }
 }
