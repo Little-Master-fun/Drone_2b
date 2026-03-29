@@ -2865,6 +2865,12 @@
                 <name>$PROJ_DIR$\..\..\code\drivers\driver_dshot600.h</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_motor_pwm.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\code\drivers\driver_motor_pwm.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\code\drivers\driver_pmw3901.c</name>
             </file>
             <file>

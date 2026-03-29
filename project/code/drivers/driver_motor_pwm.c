@@ -9,10 +9,10 @@
 
 static const pwm_channel_enum driver_motor_pwm_channels[DRIVER_MOTOR_PWM_COUNT] =
 {
-    TCPWM_CH09_P05_0,
-    TCPWM_CH10_P05_1,
-    TCPWM_CH11_P05_2,
-    TCPWM_CH12_P05_3
+    TCPWM_CH54_P18_3,
+    TCPWM_CH53_P18_4,
+    TCPWM_CH52_P18_5,
+    TCPWM_CH51_P18_6
 };
 
 static uint8 driver_motor_pwm_initialized = 0U;
