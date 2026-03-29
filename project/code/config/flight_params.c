@@ -375,5 +375,9 @@ void flight_params_init (void)
     {
         fp_reset_defaults_locked();
     }
+
+    g_param_values[FLIGHT_PARAM_FLOW_ENABLE].u8 = 1U;
+    g_param_values[FLIGHT_PARAM_TOF_ENABLE].u8 = 1U;
+
     g_inited = 1U;
 }

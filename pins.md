@@ -1,3 +1,13 @@
+<!--
+ * @Author: Littlemaster littlemasterfun@gmail.com
+ * @Date: 2026-03-28 20:04:02
+ * @LastEditors: Littlemaster littlemasterfun@gmail.com
+ * @LastEditTime: 2026-03-29 09:53:00
+ * @FilePath: /mcu/Drone_2b/pins.md
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by LittleMaster, All Rights Reserved. 
+-->
 | 设备 | 通信方式 | 接口号/总线 | MCU 引脚 | 说明 |
 |---|---|---|---|---|
 | IMU - SCH16TK01 | SPI | SPI1 | `P06.2 / SCK` `P06.1 / MOSI` `P06.0 / MISO` `P06.3 / CS` | 当前主 IMU，输出陀螺和加速度数据 |
