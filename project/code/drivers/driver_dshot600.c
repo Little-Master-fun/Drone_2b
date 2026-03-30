@@ -29,7 +29,7 @@
 #define DRIVER_DSHOT600_PDMA_CH_SET           (8U)
 #define DRIVER_DSHOT600_PDMA_CH_CLR           (9U)
 
-#define DRIVER_DSHOT600_TIMEOUT_US            (200U)
+#define DRIVER_DSHOT600_DMA_WAIT_MAX_LOOP     (200000U)
 
 #define DRIVER_DSHOT600_COMMAND_MAX           (47U)
 
@@ -52,11 +52,11 @@ static driver_dshot600_state_struct g_dshot600 = {0};
 
 static uint8 driver_dshot600_dma_wait_done (void)
 {
-    uint32 start_tick = systick_get_us();
+    uint32 loop = 0U;
 
     while (0U == Cy_PDMA_Chnl_GetInterruptStatusMasked(DW0, DRIVER_DSHOT600_PDMA_CH_CLR))
     {
-        if ((systick_get_us() - start_tick) > DRIVER_DSHOT600_TIMEOUT_US)
+        if (++loop > DRIVER_DSHOT600_DMA_WAIT_MAX_LOOP)
         {
             return 1U;
         }

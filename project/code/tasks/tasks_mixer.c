@@ -236,11 +236,12 @@ static void mixer_task_entry (void *parameter)
             else if (motor_test_index == 5U) { motors[0] = test_thr; motors[1] = test_thr; motors[2] = test_thr; motors[3] = test_thr; }
 
             mixer_map_logical_to_physical(motors, physical_to_logical, physical_motors);
-            out.motor1 = task_throttle_to_pwm(physical_motors[0]);
-            out.motor2 = task_throttle_to_pwm(physical_motors[1]);
-            out.motor3 = task_throttle_to_pwm(physical_motors[2]);
-            out.motor4 = task_throttle_to_pwm(physical_motors[3]);
-            (void)driver_motor_pwm_set_throttle_all(out.motor1, out.motor2, out.motor3, out.motor4);
+            out.motor1 = task_throttle_to_dshot(physical_motors[0]);
+            out.motor2 = task_throttle_to_dshot(physical_motors[1]);
+            out.motor3 = task_throttle_to_dshot(physical_motors[2]);
+            out.motor4 = task_throttle_to_dshot(physical_motors[3]);
+            (void)driver_dshot600_set_throttle_all(out.motor1, out.motor2, out.motor3, out.motor4, 0U);
+            (void)driver_dshot600_send_frame();
         }
         else if (out.enabled && control.armed && !control.failsafe)
         {
