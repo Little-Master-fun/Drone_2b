@@ -5,7 +5,7 @@
 
 #include "config/flight_params.h"
 #include "config/shared_memory.h"
-#include "drivers/driver_motor_pwm.h"
+#include "drivers/driver_dshot600.h"
 #include "tasks.h"
 
 #define TASK_MIXER_NAME                "Mixer"
@@ -16,6 +16,8 @@
 #define MIXER_OUTPUT_MIN               (0.0f)
 #define MIXER_OUTPUT_MAX               (1200.0f)
 #define MIXER_YAW_MARGIN_RATIO         (0.15f)
+#define MIXER_DSHOT_MIN                (DRIVER_DSHOT600_THROTTLE_MIN)
+#define MIXER_DSHOT_MAX                (DRIVER_DSHOT600_THROTTLE_MAX)
 
 static TaskHandle_t g_task_mixer = 0;
 static uint8 g_motor_output_ready = 0U;
@@ -33,9 +35,17 @@ static float task_clamp_float (float value, float min_value, float max_value)
     return value;
 }
 
-static uint16 task_throttle_to_pwm (float throttle)
+static uint16 task_throttle_to_dshot (float throttle)
 {
-    return (uint16)task_clamp_float(throttle, MIXER_OUTPUT_MIN, MIXER_OUTPUT_MAX);
+    float limited = task_clamp_float(throttle, MIXER_OUTPUT_MIN, MIXER_OUTPUT_MAX);
+
+    if (limited <= 0.0f)
+    {
+        return 0U;
+    }
+
+    return (uint16)(MIXER_DSHOT_MIN +
+                    ((limited / MIXER_OUTPUT_MAX) * (float)(MIXER_DSHOT_MAX - MIXER_DSHOT_MIN)));
 }
 
 static uint32 task_now_ms (void)
@@ -275,16 +285,17 @@ static void mixer_task_entry (void *parameter)
             }
 
             mixer_map_logical_to_physical(motors, physical_to_logical, physical_motors);
-            out.motor1 = task_throttle_to_pwm(physical_motors[0]);
-            out.motor2 = task_throttle_to_pwm(physical_motors[1]);
-            out.motor3 = task_throttle_to_pwm(physical_motors[2]);
-            out.motor4 = task_throttle_to_pwm(physical_motors[3]);
-            (void)driver_motor_pwm_set_throttle_all(out.motor1, out.motor2, out.motor3, out.motor4);
+            out.motor1 = task_throttle_to_dshot(physical_motors[0]);
+            out.motor2 = task_throttle_to_dshot(physical_motors[1]);
+            out.motor3 = task_throttle_to_dshot(physical_motors[2]);
+            out.motor4 = task_throttle_to_dshot(physical_motors[3]);
+            (void)driver_dshot600_set_throttle_all(out.motor1, out.motor2, out.motor3, out.motor4, 0U);
+            (void)driver_dshot600_send_frame();
         }
         else
         {
             out.enabled = 0U;
-            driver_motor_pwm_stop_all();
+            driver_dshot600_stop_all();
         }
 
         shm_publish_mixer(&out);
@@ -298,7 +309,7 @@ void tasks_mixer_init (void)
     {
         if (!g_motor_output_ready)
         {
-            g_motor_output_ready = (driver_motor_pwm_init() == 0U) ? 1U : 0U;
+            g_motor_output_ready = (driver_dshot600_init() == 0U) ? 1U : 0U;
         }
         xTaskCreate(mixer_task_entry, TASK_MIXER_NAME, TASK_MIXER_STACK, 0, TASK_MIXER_PRIORITY, &g_task_mixer);
     }

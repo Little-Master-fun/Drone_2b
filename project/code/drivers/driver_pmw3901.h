@@ -1,3 +1,13 @@
+/*
+ * @Author: Littlemaster littlemasterfun@gmail.com
+ * @Date: 2026-03-27 22:16:14
+ * @LastEditors: Littlemaster littlemasterfun@gmail.com
+ * @LastEditTime: 2026-03-30 15:14:00
+ * @FilePath: /mcu/Drone_2b/project/code/drivers/driver_pmw3901.h
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by LittleMaster, All Rights Reserved. 
+ */
 #ifndef _driver_pmw3901_h_
 #define _driver_pmw3901_h_
 
@@ -13,7 +23,7 @@
 #define DRIVER_PMW3901_SPI_MISO_PIN       (SPI3_MISO_P13_0)
 #define DRIVER_PMW3901_CS_PIN             (P13_3)
 #define DRIVER_PMW3901_USE_MOTION_IRQ     (1U)
-#define DRIVER_PMW3901_MOT_PIN            (P14_3)
+#define DRIVER_PMW3901_MOT_PIN            (P14_0)
 #define DRIVER_PMW3901_MOT_TRIGGER        (EXTI_TRIGGER_RISING)
 
 #ifndef DRIVER_SENSOR_DETECT_UNKNOWN
