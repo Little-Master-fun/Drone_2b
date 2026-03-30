@@ -12,6 +12,7 @@
 |---|---|---|---|---|
 | IMU - SCH16TK01 | SPI | SPI1 | `P06.2 / SCK` `P06.1 / MOSI` `P06.0 / MISO` `P06.3 / CS` | 当前主 IMU，输出陀螺和加速度数据 |
 | 光流 - PMW3901 | SPI | SPI3 | `P13.2 / SCK` `P13.1 / MOSI` `P13.0 / MISO` `P13.3 / CS` | 向下光流传感器 |
+| 光流中断 - PMW3901 MOT | GPIO EXTI | GPIO14 | `P14.3 / MOT` | 光流运动中断输入（上升沿触发） |
 | 测距 - VL53L1X / DL1B | I2C | Soft I2C | `P11.1 / SCL` `P11.2 / SDA` | 当前高度测距输入 |
 | 无线串口模块 | UART | UART2 | `P07.0 / RX` `P07.1 / TX` `P07.2 / RTS` | 地面站通信、参数和遥测链路 |
 | 4in1 电调 | DShot600 | Motor1~4 | `P18.0 / M1` `P18.1 / M2` `P18.2 / M3` `P18.3 / M4` | 当前飞控输出使用并行 DShot600，`P18.4` 预留未使用 |

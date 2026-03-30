@@ -7,6 +7,8 @@
 
 #define PMW3901_CHIP_ID                  (0x49U)
 static uint8 driver_pmw3901_spi_inited = 0U;
+static uint8 driver_pmw3901_irq_inited = 0U;
+static volatile uint8 driver_pmw3901_motion_irq_pending = 1U;
 static uint8 driver_pmw3901_tx_buf[2];
 static uint8 driver_pmw3901_rx_buf[2];
 static char driver_pmw3901_chip_id_err[] = "pmw3901 chip id error.";
@@ -87,6 +89,20 @@ static void driver_pmw3901_spi_init(void)
 
     gpio_init(DRIVER_PMW3901_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
     driver_pmw3901_spi_inited = 1U;
+}
+
+static void driver_pmw3901_motion_irq_init(void)
+{
+#if DRIVER_PMW3901_USE_MOTION_IRQ
+    if (driver_pmw3901_irq_inited)
+    {
+        return;
+    }
+
+    gpio_init(DRIVER_PMW3901_MOT_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+    exti_init(DRIVER_PMW3901_MOT_PIN, DRIVER_PMW3901_MOT_TRIGGER);
+    driver_pmw3901_irq_inited = 1U;
+#endif
 }
 
 static uint8 driver_pmw3901_spi_transfer(uint8 out_byte)
@@ -193,8 +209,10 @@ uint8 driver_pmw3901_init(void)
     driver_pmw3901_status.expected_chip_id = PMW3901_CHIP_ID;
     driver_pmw3901_status.chip_id = 0U;
     driver_pmw3901_status.chip_id_inverse = 0U;
+    driver_pmw3901_motion_irq_pending = 1U;
 
     driver_pmw3901_spi_init();
+    driver_pmw3901_motion_irq_init();
 
     gpio_high(DRIVER_PMW3901_CS_PIN);
     system_delay_ms(1);
@@ -265,6 +283,8 @@ uint8 driver_pmw3901_read_motion(driver_pmw3901_motion_struct *motion)
     motion->min_raw = driver_pmw3901_register_read(0x0A);
     motion->shutter_lower = driver_pmw3901_register_read(0x0B);
     motion->shutter_upper = driver_pmw3901_register_read(0x0C);
+
+    driver_pmw3901_motion_irq_pending = 0U;
 
     return 0U;
 }
@@ -347,4 +367,26 @@ void driver_pmw3901_set_led(uint8 on)
     driver_pmw3901_register_write(0x7F, 0x14);
     driver_pmw3901_register_write(0x6F, on ? 0x1CU : 0x00U);
     driver_pmw3901_register_write(0x7F, 0x00);
+}
+
+void driver_pmw3901_motion_irq_handler(void)
+{
+#if DRIVER_PMW3901_USE_MOTION_IRQ
+    driver_pmw3901_motion_irq_pending = 1U;
+#endif
+}
+
+uint8 driver_pmw3901_motion_irq_take(uint8 clear_flag)
+{
+#if DRIVER_PMW3901_USE_MOTION_IRQ
+    uint8 pending = driver_pmw3901_motion_irq_pending;
+    if (clear_flag)
+    {
+        driver_pmw3901_motion_irq_pending = 0U;
+    }
+    return pending;
+#else
+    (void)clear_flag;
+    return 1U;
+#endif
 }

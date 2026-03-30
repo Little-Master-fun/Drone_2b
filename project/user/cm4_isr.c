@@ -35,6 +35,7 @@
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
+#include "drivers/driver_pmw3901.h"
 
 // **************************** PIT中断函数 ****************************
 void pit0_ch0_isr()                     // 定时器通道 0 周期中断服务函数      
@@ -379,6 +380,10 @@ void gpio_13_exti_isr()                  // 外部 GPIO_13 中断服务函数
 
 void gpio_14_exti_isr()                  // 外部 GPIO_14 中断服务函数     
 {
+    if(exti_flag_get(DRIVER_PMW3901_MOT_PIN))
+    {
+        driver_pmw3901_motion_irq_handler();
+    }
 
 
 

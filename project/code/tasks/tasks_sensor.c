@@ -27,6 +27,7 @@
 #define SENSOR_FLOW_PERIOD_MS                (10U)
 #define SENSOR_TOF_PERIOD_MS                 (50U)
 #define SENSOR_OPTIONAL_RETRY_MS             (1000U)
+#define SENSOR_FLOW_FALLBACK_POLL_MS         (100U)
 
 #define SCH16TK01_ACC_SCALE_MSS_PER_LSB      (1.0f / 3200.0f)
 #define SCH16TK01_ACC_SCALE_G_PER_LSB        (SCH16TK01_ACC_SCALE_MSS_PER_LSB / 9.80665f)
@@ -246,6 +247,18 @@ static void sensor_publish_flow (TickType_t now_tick)
     shm_publish_flow(&shm_data);
 }
 
+static void sensor_publish_flow_waiting (TickType_t now_tick)
+{
+    shm_flow_data_struct shm_data;
+
+    memset(&shm_data, 0, sizeof(shm_data));
+    shm_data.timestamp_ms = sensor_tick_to_ms(now_tick);
+    shm_data.healthy = 1U;
+    shm_data.error_code = 0U;
+    sensor_fill_flow_diag(&shm_data);
+    shm_publish_flow(&shm_data);
+}
+
 static void sensor_publish_tof (TickType_t now_tick)
 {
     driver_vl53l1x_data_struct data = {0};
@@ -316,6 +329,7 @@ static void flow_task_entry (void *parameter)
 {
     TickType_t last_wake = xTaskGetTickCount();
     TickType_t last_init_try = 0U;
+    TickType_t last_poll_tick = 0U;
     uint8 flow_inited = 0U;
     uint8 flow_init_ret = 0U;
 
@@ -346,7 +360,24 @@ static void flow_task_entry (void *parameter)
 
         if (flow_inited)
         {
-            sensor_publish_flow(now_tick);
+            uint8 flow_irq_pending = driver_pmw3901_motion_irq_take(1U);
+            uint8 flow_force_poll = 0U;
+
+            if ((last_poll_tick == 0U) ||
+                ((sensor_tick_to_ms(now_tick) - sensor_tick_to_ms(last_poll_tick)) >= SENSOR_FLOW_FALLBACK_POLL_MS))
+            {
+                flow_force_poll = 1U;
+            }
+
+            if (flow_irq_pending || flow_force_poll)
+            {
+                sensor_publish_flow(now_tick);
+                last_poll_tick = now_tick;
+            }
+            else
+            {
+                sensor_publish_flow_waiting(now_tick);
+            }
         }
         else
         {
